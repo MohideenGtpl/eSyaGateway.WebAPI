@@ -1,0 +1,75 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using eSyaGateway.DO;
+using eSyaGateway.IF;
+using eSyaGateway.WebAPI.Utility;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace eSyaGateway.WebAPI.Controllers
+{
+    [Route("api/[controller]/[action]")]
+    [ApiController]
+    public class UserAccountController : ControllerBase
+    {
+        private readonly IUserAccountRepository _userAccountRepository;
+
+        public UserAccountController(IUserAccountRepository userAccountRepository)
+        {
+            _userAccountRepository = userAccountRepository;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidateUserPassword(DO_UserAccount obj)
+        {
+            obj.ePassword = CryptGeneration.Encrypt(obj.Password);
+            var ds = await _userAccountRepository.ValidateUserPassword(obj.LoginID, obj.ePassword);
+            return Ok(ds);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ValidateUserMobile(string mobileNumber)
+        {
+            var ds = await _userAccountRepository.ValidateUserMobile(mobileNumber);
+            return Ok(ds);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidateUserOTP(DO_UserAccount obj)
+        {
+            var ds = await _userAccountRepository.ValidateUserOTP(obj.MobileNumber, obj.OTP);
+            return Ok(ds);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GeteSyaMenulist()
+        {
+            var ds = await _userAccountRepository.GeteSyaMenulist();
+            return Ok(ds);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetFormAction(string navigationURL)
+        {
+            var ds = await _userAccountRepository.GetFormAction(navigationURL);
+            return Ok(ds);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUserMenulist(int businessKey, int userID)
+        {
+            var ds = await _userAccountRepository.GetUserMenulist(businessKey, userID);
+            return Ok(ds);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFormActionByUser(int businessKey, int userID, string navigationURL)
+        {
+            var ds = await _userAccountRepository.GetFormActionByUser(businessKey, userID, navigationURL);
+            return Ok(ds);
+        }
+
+      
+    }
+}

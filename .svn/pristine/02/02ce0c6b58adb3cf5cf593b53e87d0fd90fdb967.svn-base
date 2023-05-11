@@ -1,0 +1,408 @@
+﻿using eSyaGateway.DL.Entities;
+using eSyaGateway.DO;
+using eSyaGateway.IF;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace eSyaGateway.DL.Repository
+{
+    public class UserAccountRepository : IUserAccountRepository
+    {
+
+        public async Task<DO_UserAccount> ValidateUserPassword(string loginID, string password)
+        {
+            using (var db = new eSyaEnterprise())
+            {
+                DO_UserAccount us = new DO_UserAccount();
+
+                var lg = await db.GtEuusms
+                    .Where(w => w.LoginId == loginID
+                                && w.ActiveStatus == true)
+                    .FirstOrDefaultAsync();
+
+                if (lg != null)
+                {
+                    if (lg.Password == password)
+                    {
+                        us.IsSucceeded = true;
+                        us.UserID = lg.UserId;
+
+                        var ub = db.GtEuusbl
+                            .Join(db.GtEcbsln,
+                                u => u.BusinessKey,
+                                b => b.BusinessKey,
+                                (u, b) => new { u, b })
+                            .Where(w => w.u.UserId == lg.UserId);
+
+                        us.l_BusinessKey = ub.Select(x => new KeyValuePair<int, string>(x.u.BusinessKey, x.b.LocationDescription))
+                           .ToDictionary(x => x.Key, x => x.Value);
+
+                        if (ub.Where(w => w.u.AllowMtfy).Count() > 0)
+                        {
+                            us.l_FinancialYear = db.GtEcclco
+                                .Where(w => w.FromDate.Date <= System.DateTime.Now.Date)
+                                .Select(x => (int)x.FinancialYear).OrderByDescending(o => o).ToList();
+                        }
+                        else
+                        {
+                            us.l_FinancialYear = db.GtEcclco
+                                 .Where(w => w.FromDate.Date >= System.DateTime.Now.Date
+                                    && w.TillDate.Date <= System.DateTime.Now.Date)
+                                 .Select(x => (int)x.FinancialYear).OrderByDescending(o => o).ToList();
+                        }
+                    }
+                    else
+                    {
+                        us.IsSucceeded = false;
+                        us.Message = "Invalid password";
+                    }
+                }
+                else
+                {
+                    us.IsSucceeded = false;
+                    us.Message = "Invalid username";
+                }
+
+                return us;
+            }
+        }
+
+        public async Task<DO_UserAccount> ValidateUserMobile(string mobileNumber)
+        {
+            using (var db = new eSyaEnterprise())
+            {
+                DO_UserAccount us = new DO_UserAccount();
+
+                var lg = await db.GtEuusms
+                    .Where(w => w.MobileNumber == mobileNumber
+                                && w.ActiveStatus == true)
+                    .FirstOrDefaultAsync();
+
+                if (lg != null)
+                {
+                    Random rnd = new Random();
+                    var OTP = rnd.Next(100000, 999999).ToString();
+
+                    us.IsSucceeded = true;
+                    us.UserID = lg.UserId;
+                    us.OTP = OTP;
+
+                    lg.Otpnumber = OTP;
+                    lg.OtpgeneratedDate = System.DateTime.Now;
+                    db.SaveChanges();
+                }
+                else
+                {
+                    us.IsSucceeded = false;
+                    us.StatusCode = "404";
+                }
+
+                return us;
+            }
+        }
+
+        public async Task<DO_UserAccount> ValidateUserOTP(string mobileNumber, string otp)
+        {
+            using (var db = new eSyaEnterprise())
+            {
+                DO_UserAccount us = new DO_UserAccount();
+
+                var lg = await db.GtEuusms
+                    .Where(w => w.MobileNumber == mobileNumber
+                                && w.ActiveStatus == true)
+                    .FirstOrDefaultAsync();
+
+                if (lg != null)
+                {
+                    if (lg.Otpnumber == otp)
+                    {
+                        us.IsSucceeded = true;
+                        us.UserID = lg.UserId;
+                        us.LoginID = lg.LoginId;
+
+                        var ub = db.GtEuusbl
+                            .Join(db.GtEcbsln,
+                                u => u.BusinessKey,
+                                b => b.BusinessKey,
+                                (u, b) => new { u, b })
+                            .Where(w => w.u.UserId == lg.UserId);
+
+                        us.l_BusinessKey = ub.Select(x => new KeyValuePair<int, string>(x.u.BusinessKey, x.b.LocationDescription))
+                           .ToDictionary(x => x.Key, x => x.Value);
+
+                        if (ub.Where(w => w.u.AllowMtfy).Count() > 0)
+                        {
+                            us.l_FinancialYear = db.GtEcclco
+                                .Where(w => w.FromDate.Date <= System.DateTime.Now.Date)
+                                .Select(x => (int)x.FinancialYear).OrderByDescending(o => o).ToList();
+                        }
+                        else
+                        {
+                            us.l_FinancialYear = db.GtEcclco
+                                 .Where(w => w.FromDate.Date >= System.DateTime.Now.Date
+                                    && w.TillDate.Date <= System.DateTime.Now.Date)
+                                 .Select(x => (int)x.FinancialYear).OrderByDescending(o => o).ToList();
+                        }
+                    }
+                    else
+                    {
+                        us.IsSucceeded = false;
+                        us.Message = "Invalid OTP";
+                    }
+                }
+                else
+                {
+                    us.IsSucceeded = false;
+                    us.Message = "Invalid OTP";
+                }
+
+                return us;
+            }
+        }
+
+        public async Task<List<DO_MainMenu>> GeteSyaMenulist()
+        {
+            try
+            {
+                using (eSyaEnterprise db = new eSyaEnterprise())
+                {
+                    var menuList = db.GtEcmamn.Where(w => w.ActiveStatus == true)
+                                   .Select(m => new DO_MainMenu()
+                                   {
+                                       MainMenuId = m.MainMenuId,
+                                       MainMenu = m.MainMenu,
+                                       MenuIndex = m.MenuIndex,
+                                       l_SubMenu = db.GtEcsbmn.Where(w => w.MainMenuId == m.MainMenuId && w.ActiveStatus == true)
+                                        .Select(s => new DO_SubMenu()
+                                        {
+                                            MainMenuId = s.MainMenuId,
+                                            MenuItemId = s.MenuItemId,
+                                            MenuItemName = s.MenuItemName,
+                                            MenuIndex = s.MenuIndex,
+                                            l_FormMenu = db.GtEcmnfl
+                                                        .Join(db.GtEcfmnm,
+                                                        f => f.FormId,
+                                                        i => i.FormId,
+                                                        (f, i) => new { f, i })
+                                                .Where(w => w.f.MenuItemId == s.MenuItemId && w.f.ActiveStatus == true)
+                                                .AsQueryable()
+                                                .Select(f => new DO_FormMenu()
+                                                {
+                                                    FormId = f.f.FormId,
+                                                    FormInternalID = f.i.FormIntId,
+                                                    FormNameClient = f.f.FormNameClient,
+                                                    NavigateUrl = f.i.NavigateUrl,
+                                                    Area = f.i.NavigateUrl.Split('/', StringSplitOptions.None)[0],
+                                                    Controller = f.i.NavigateUrl.Split('/', StringSplitOptions.None)[1],
+                                                    View = f.i.NavigateUrl.Split('/', StringSplitOptions.None)[2],
+                                                    FormIndex = f.f.FormIndex,
+                                                    MenuKey = f.f.MenuKey
+                                                }).ToList(),
+
+                                        }).ToList()
+                                   });
+                    return await menuList.ToListAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<DO_UserFormRole> GetFormAction(string navigationURL)
+        {
+            using (var db = new eSyaEnterprise())
+            {
+                var lr = db.GtEcfmnm
+                    .Where(w => w.NavigateUrl == navigationURL && w.ActiveStatus == true)
+                    .AsNoTracking()
+                    .Select(x => new DO_UserFormRole
+                    {
+                        FormID = x.FormId,
+                        FormIntID = x.FormIntId,
+                        FormName = db.GtEcmnfl.Where(w => w.FormId == x.FormId).FirstOrDefault().FormNameClient,
+                        IsInsert = db.GtEcfmal.Where(w => w.FormId == x.FormId && w.ActionId == 1).Count() > 0,
+                        IsEdit = db.GtEcfmal.Where(w => w.FormId == x.FormId && w.ActionId == 2).Count() > 0,
+                        IsDelete = db.GtEcfmal.Where(w => w.FormId == x.FormId && w.ActionId == 3).Count() > 0,
+                        IsPrint = db.GtEcfmal.Where(w => w.FormId == x.FormId && w.ActionId == 4).Count() > 0,
+                        IsRePrint = db.GtEcfmal.Where(w => w.FormId == x.FormId && w.ActionId == 5).Count() > 0,
+                        IsApprove = db.GtEcfmal.Where(w => w.FormId == x.FormId && w.ActionId == 6).Count() > 0,
+                        IsAuthenticate = db.GtEcfmal.Where(w => w.FormId == x.FormId && w.ActionId == 7).Count() > 0,
+                        IsGiveConcession = db.GtEcfmal.Where(w => w.FormId == x.FormId && w.ActionId == 8).Count() > 0,
+                        IsGiveDiscount = db.GtEcfmal.Where(w => w.FormId == x.FormId && w.ActionId == 9).Count() > 0,
+                    }).FirstOrDefaultAsync();
+
+                return await lr;
+            }
+        }
+
+        public List<DO_SubMenu> GetSubMenuItem(int mainMenuID, int menuItemID, List<DO_SubMenu> userMenu)
+        {
+            using (eSyaEnterprise db = new eSyaEnterprise())
+            {
+                var sm = db.GtEcsbmn.Where(w => w.MainMenuId == mainMenuID
+                    && w.ParentId == menuItemID && w.ActiveStatus == true);
+                foreach (var s in sm)
+                {
+                    userMenu.Add(new DO_SubMenu { MenuItemId = s.MenuItemId });
+                    GetSubMenuItem(s.MainMenuId, s.MenuItemId, userMenu);
+                }
+                return userMenu;
+            }
+        }
+
+        public async Task<List<DO_MainMenu>> GetUserMenulist(int businessKey, int userID)
+        {
+            try
+            {
+                using (eSyaEnterprise db = new eSyaEnterprise())
+                {
+                    var userForms = db.GtEcmnfl
+                                    .Join(db.GtEuusml,
+                                        f => f.MenuKey,
+                                        u => u.MenuKey,
+                                        (f, u) => new { f, u })
+                                    .Where(w => w.u.BusinessKey == businessKey && w.u.UserId == userID
+                                        && w.u.ActiveStatus && w.f.ActiveStatus)
+                                    .Select(r => new
+                                    {
+                                        r.f.MainMenuId,
+                                        r.f.MenuItemId,
+                                        r.f.FormId
+                                    }).ToList();
+
+                    List<DO_SubMenu> userMenu = new List<DO_SubMenu>();
+                    foreach (var um in userForms)
+                    {
+                        userMenu.Add(new DO_SubMenu { MenuItemId = um.MenuItemId });
+                        GetSubMenuItem(um.MainMenuId, um.MenuItemId, userMenu);
+                    }
+
+                    var menuList = db.GtEcmamn.Where(w => w.ActiveStatus
+                                        && userForms.Any(m => m.MainMenuId == w.MainMenuId))
+                                   .Select(m => new DO_MainMenu()
+                                   {
+                                       MainMenuId = m.MainMenuId,
+                                       MainMenu = m.MainMenu,
+                                       MenuIndex = m.MenuIndex,
+                                       l_SubMenu = db.GtEcsbmn.Where(w => w.MainMenuId == m.MainMenuId && w.ActiveStatus == true
+                                                    && userMenu.Any(f => f.MenuItemId == w.MenuItemId))
+                                        .Select(s => new DO_SubMenu()
+                                        {
+                                            MainMenuId = s.MainMenuId,
+                                            MenuItemId = s.MenuItemId,
+                                            MenuItemName = s.MenuItemName,
+                                            MenuIndex = s.MenuIndex,
+                                            l_FormMenu = db.GtEcmnfl
+                                                        .Join(db.GtEcfmnm,
+                                                        f => f.FormId,
+                                                        i => i.FormId,
+                                                        (f, i) => new { f, i })
+                                                .Where(w => w.f.MenuItemId == s.MenuItemId && w.f.ActiveStatus == true
+                                                         && userForms.Any(f => f.FormId == w.f.FormId))
+                                                .AsQueryable()
+                                                .Select(f => new DO_FormMenu()
+                                                {
+                                                    FormId = f.f.FormId,
+                                                    FormInternalID = f.i.FormIntId,
+                                                    FormNameClient = f.f.FormNameClient,
+                                                    NavigateUrl = f.i.NavigateUrl,
+                                                    Area = f.i.NavigateUrl.Split('/', StringSplitOptions.None)[0],
+                                                    Controller = f.i.NavigateUrl.Split('/', StringSplitOptions.None)[1],
+                                                    View = f.i.NavigateUrl.Split('/', StringSplitOptions.None)[2],
+                                                    FormIndex = f.f.FormIndex,
+                                                    MenuKey = f.f.MenuKey
+                                                }).ToList(),
+
+                                        }).ToList()
+                                   });
+                    return await menuList.ToListAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<DO_UserFormRole> GetFormActionByUser(int businessKey, int userID, string navigationURL)
+        {
+            try
+            {
+                using (var db = new eSyaEnterprise())
+                {
+                    var lr = db.GtEcfmfd
+                        .Join(db.GtEcfmnm,
+                            f => f.FormId,
+                            d => d.FormId,
+                            (f, d) => new { f, d })
+                        .Join(db.GtEcmnfl,
+                            fd => fd.f.FormId,
+                            m => m.FormId,
+                            (fd, m) => new { fd, m })
+                        //.GroupJoin(db.GtEuusfa.Where(w => w.BusinessKey == businessID && w.ActiveStatus),
+                        //   fdm => fdm.m.MenuKey,
+                        //   a => a.MenuKey,
+                        //   (fdm, a) => new { fdm, a = a.FirstOrDefault() })
+                        .Where(w => w.fd.d.NavigateUrl == navigationURL)
+                        .Select(x => new DO_UserFormRole
+                        {
+                            FormID = x.fd.f.FormId,
+                            FormIntID = x.fd.d.FormIntId,
+                            FormName = x.m.FormNameClient,
+                            IsInsert = db.GtEuusfa.Where(w => w.UserId == userID && w.MenuKey == x.m.MenuKey && w.ActionId == 1).Count() > 0,
+                            IsEdit = db.GtEuusfa.Where(w => w.UserId == userID && w.MenuKey == x.m.MenuKey && w.ActionId == 2).Count() > 0,
+                            IsDelete = db.GtEuusfa.Where(w => w.UserId == userID && w.MenuKey == x.m.MenuKey && w.ActionId == 3).Count() > 0,
+                            IsPrint = db.GtEuusfa.Where(w => w.UserId == userID && w.MenuKey == x.m.MenuKey && w.ActionId == 4).Count() > 0,
+                            IsRePrint = db.GtEuusfa.Where(w => w.UserId == userID && w.MenuKey == x.m.MenuKey && w.ActionId == 5).Count() > 0,
+                            IsApprove = db.GtEuusfa.Where(w => w.UserId == userID && w.MenuKey == x.m.MenuKey && w.ActionId == 6).Count() > 0,
+                            IsAuthenticate = db.GtEuusfa.Where(w => w.UserId == userID && w.MenuKey == x.m.MenuKey && w.ActionId == 7).Count() > 0,
+                            IsGiveConcession = db.GtEuusfa.Where(w => w.UserId == userID && w.MenuKey == x.m.MenuKey && w.ActionId == 8).Count() > 0,
+                            IsGiveDiscount = db.GtEuusfa.Where(w => w.UserId == userID && w.MenuKey == x.m.MenuKey && w.ActionId == 9).Count() > 0,
+                        }).FirstOrDefaultAsync();
+
+                    return await lr;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
+        public static string Decrypt(string cipherText)
+        {
+            string EncryptionKey = "eSya@12345Tabibi247";
+            cipherText = cipherText.Replace(" ", "+");
+            byte[] cipherBytes = Convert.FromBase64String(cipherText);
+            using (Aes encryptor = Aes.Create())
+            {
+                Rfc2898DeriveBytes pdb = new Rfc2898DeriveBytes(EncryptionKey, new byte[] {
+            0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76
+        });
+                encryptor.Key = pdb.GetBytes(32);
+                encryptor.IV = pdb.GetBytes(16);
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (CryptoStream cs = new CryptoStream(ms, encryptor.CreateDecryptor(), CryptoStreamMode.Write))
+                    {
+                        cs.Write(cipherBytes, 0, cipherBytes.Length);
+                        cs.Close();
+                    }
+                    cipherText = Encoding.Unicode.GetString(ms.ToArray());
+                }
+            }
+            return cipherText;
+        }
+
+    }
+}

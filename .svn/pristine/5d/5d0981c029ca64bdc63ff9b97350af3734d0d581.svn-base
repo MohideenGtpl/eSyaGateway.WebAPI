@@ -1,0 +1,29 @@
+﻿using eSyaGateway.DO;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace eSyaGateway.IF
+{
+    public interface IUserAccountRepository
+    {
+        Task<DO_UserAccount> ValidateUserPassword(string loginID, string password);
+        Task<DO_UserAccount> ValidateUserMobileLogin(string mobileNumber);
+        Task<DO_UserAccount> ValidateUserMobile(string mobileNumber);
+        Task<DO_UserAccount> ValidateUserOTP(string mobileNumber, string otp);
+        Task<bool> CreateUserPassword(int userID, string password);
+        Task<DO_ReturnParameter> ResetUserPassword(int userID, string oldpassword, string newPassword);
+        Task<string> GetUserPassword(int userID);
+
+        Task<List<DO_MainMenu>> GeteSyaMenulist();
+        Task<DO_UserFormRole> GetFormAction(string navigationURL);
+
+        Task<List<DO_MainMenu>> GetUserMenulist(int businessKey, int userID);
+        Task<DO_UserFormRole> GetFormActionByUser(int businessKey, int userID, string navigationURL);
+
+        Task<DO_UserAccount> GetUserBusinessLocation(int userID);
+
+
+    }
+}

@@ -1,0 +1,131 @@
+﻿using eSyaGateway.DL.Entities;
+using eSyaGateway.DO;
+using eSyaGateway.IF;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace eSyaGateway.DL.Repository
+{
+    public class UserAccountRepository : IUserAccountRepository
+    {
+        public async Task<DO_UserFormRole> GetFormAction(int userID, string navigationURL)
+        {
+            using (var db = new eSyaEnterprise())
+            {
+                var lr = db.GtEcfmnm
+                    .Join(db.GtEcfmal,
+                        f => f.FormId,
+                        a => a.FormId,
+                        (f, a) => new { f, a })
+                    .Where(w => w.f.NavigateUrl == navigationURL
+                                && w.a.ActiveStatus == true)
+                    .AsNoTracking()
+                    .Select(x => new DO_UserFormRole
+                    {
+                        FormID = x.f.FormId,
+                        FormIntID = x.f.FormIntId,
+                        IsInsert = x.a != null ? x.a.ActionId == 1 : false,
+                        IsEdit = x.a != null ? x.a.ActionId == 2 : false,
+                        IsDelete = x.a != null ? x.a.ActionId == 3 : false,
+                        IsPrint = x.a != null ? x.a.ActionId == 4 : false,
+                        IsRePrint = x.a != null ? x.a.ActionId == 5 : false,
+                        IsApprove = x.a != null ? x.a.ActionId == 6 : false,
+                        IsAuthenticate = x.a != null ? x.a.ActionId == 7 : false,
+                        IsGiveConcession = x.a != null ? x.a.ActionId == 8 : false,
+                        IsGiveDiscount = x.a != null ? x.a.ActionId == 9 : false
+                    }).FirstOrDefaultAsync();
+
+                return await lr;
+            }
+        }
+
+        public async Task<DO_UserAccount> ValidateUserPassword(int userID, string password)
+        {
+            using (var db = new eSyaEnterprise())
+            {
+                DO_UserAccount us = new DO_UserAccount();
+
+                var lg = await db.GtEuusms
+                    .Where(w => w.UserId == userID
+                                && w.ActiveStatus == true)
+                    .FirstOrDefaultAsync();
+
+                if (lg != null)
+                {
+                    if (lg.Password == password)
+                    {
+                        us.IsSucceeded = true;
+                        us.l_BusinessKey = db.GtEuusbl
+                            .Join(db.GtEcbsln,
+                                u => u.BusinessKey,
+                                b => b.BusinessKey,
+                                (u, b) => new { u, b })
+                            .Select(x => new KeyValuePair<int, string>(x.u.BusinessKey, x.b.LocationDescription))
+                            .ToDictionary(x => x.Key, x => x.Value);
+                     }
+                    else
+                    {
+                        us.IsSucceeded = false;
+                        us.Message = "";
+                    }
+                }
+                else
+                {
+                    us.IsSucceeded = false;
+                }
+
+                return us;
+            }
+        }
+
+
+        public async Task<DO_UserFormRole> GetFormActionByUser(int businessID, int userID, string navigationURL)
+        {
+            try {
+                using (var db = new eSyaEnterprise())
+                {
+                    var lr = db.GtEcfmfd
+                        .Join(db.GtEcfmnm,
+                            f => f.FormId,
+                            d => d.FormId,
+                            (f, d) => new { f, d })
+                        .Join(db.GtEcmnfl,
+                            fd => fd.f.FormId,
+                            m => m.FormId,
+                            (fd, m) => new { fd, m })
+                         .GroupJoin(db.GtEuusfa.Where(w => w.BusinessKey == businessID && w.ActiveStatus),
+                            fdm => fdm.m.MenuKey,
+                            a => a.MenuKey,
+                            (fdm, a) => new { fdm, a = a.FirstOrDefault() })
+                        .Where(w => w.fdm.fd.d.NavigateUrl == navigationURL)
+                        .Select(x => new DO_UserFormRole
+                        {
+                            FormID = x.fdm.fd.f.FormId,
+                            FormIntID = x.fdm.fd.d.FormIntId,
+                            FormName = x.fdm.m.FormNameClient,
+                            IsInsert = x.a != null ? x.a.ActionId == 1 : false,
+                            IsEdit = x.a != null ? x.a.ActionId == 2 : false,
+                            IsDelete = x.a != null ? x.a.ActionId == 3 : false,
+                            IsPrint = x.a != null ? x.a.ActionId == 4 : false,
+                            IsRePrint = x.a != null ? x.a.ActionId == 5 : false,
+                            IsApprove = x.a != null ? x.a.ActionId == 6 : false,
+                            IsAuthenticate = x.a != null ? x.a.ActionId == 7 : false,
+                            IsGiveConcession = x.a != null ? x.a.ActionId == 8 : false,
+                            IsGiveDiscount = x.a != null ? x.a.ActionId == 9 : false
+                        }).FirstOrDefaultAsync();
+
+                    return await lr;
+                }
+
+            }
+            catch(Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

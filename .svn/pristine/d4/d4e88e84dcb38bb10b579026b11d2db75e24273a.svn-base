@@ -1,0 +1,36 @@
+﻿using eSyaGateway.DL.Entities;
+using eSyaGateway.DO;
+using eSyaGateway.IF;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace eSyaGateway.DL.Repository
+{
+    public class UserAccountRepository : IUserAccountRepository
+    {
+        public async Task<DO_FormAction> GetFormAction(int userID, string navigationURL)
+        {
+            using (var db = new eSyaEnterprise())
+            {
+                var lr = db.GtEcfmnm
+                    .Join(db.GtEcfmal,
+                        f => f.FormId,
+                        a => a.FormId,
+                        (f, a) => new { f, a })
+                    .Where(w => w.a.ActiveStatus == true)
+                    .Select(x => new DO_FormAction
+                    {
+                        FormID = x.f.FormId,
+                        FormIntID = x.f.FormIntId,
+                        IsInsert = x.a != null ? x.a.ActionId == 1 : false
+                    }).FirstOrDefaultAsync();
+
+                return await lr;
+            }
+        }
+    }
+}

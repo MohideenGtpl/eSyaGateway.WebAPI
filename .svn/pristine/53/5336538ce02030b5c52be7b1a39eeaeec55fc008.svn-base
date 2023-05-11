@@ -1,0 +1,17 @@
+﻿using eSyaGateway.DO;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace eSyaGateway.IF
+{
+    public interface IUserAccountRepository
+    {
+        Task<DO_UserFormRole> GetFormAction(int userID, string navigationURL);
+
+        Task<DO_UserFormRole> GetFormActionByUser(int businessID, int userID, string navigationURL);
+
+        Task<DO_UserAccount> ValidateUserPassword(int userID, string password);
+    }
+}

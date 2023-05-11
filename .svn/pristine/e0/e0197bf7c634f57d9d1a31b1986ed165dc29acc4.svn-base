@@ -1,0 +1,71 @@
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace eSyaGateway.WebAPI.Services
+{
+    public interface ISmsSender
+    {
+        Task SendAsync(string mobileNumber, string messageText);
+    }
+    public class SmsSender : ISmsSender
+    {
+
+        HttpClient client = new HttpClient();
+        string _smsBaseURL = "http://api.smscountry.com/SMSCwebservice_bulk.aspx?User={0}&Passwd={1}&Mobilenumber={3}&Message={4}&Sid={2}&Mtype=N&DR=Y";
+        string username = "GESTALTTECH";
+        string password = "gtpl@12345";
+        string sender = "GESTLT";
+        public Task SendAsync(string mobileNumber, string messageText)
+        {
+            _smsBaseURL = String.Format(_smsBaseURL, username, password, sender, mobileNumber, messageText);
+            var uri = new Uri(_smsBaseURL);
+
+            var content = new StringContent(string.Empty);
+            var Items = new SMSReponse();
+            try
+            {
+                HttpResponseMessage response = client.PostAsync(uri, content).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = response.Content.ReadAsStringAsync().Result;
+                    Items = JsonConvert.DeserializeObject<SMSReponse>(result);
+                    Items.ResponseMessage = true;
+                }
+                else
+                    Items.ResponseMessage = false;
+            }
+            catch 
+            {
+            }
+            return Task.FromResult(0);
+        }
+
+        
+    }
+
+    public class SMSParameter
+    {
+        public string username { get; set; }
+        public string password { get; set; }
+        public string request { get; set; }
+        public string SMSID { get; set; }
+        public string language { get; set; }
+        public string sender { get; set; }
+        public string mobile { get; set; }
+        public string message { get; set; }
+        public string DelayUntil { get; set; }
+    }
+
+    public class SMSReponse
+    {
+        public string code { get; set; }
+        public string SMSID { get; set; }
+        public bool ResponseMessage { get; set; }
+
+    }
+}

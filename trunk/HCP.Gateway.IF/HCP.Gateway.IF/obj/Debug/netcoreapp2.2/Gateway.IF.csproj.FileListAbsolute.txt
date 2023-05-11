@@ -1,0 +1,12 @@
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\bin\Debug\netcoreapp2.2\Gateway.IF.deps.json
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\bin\Debug\netcoreapp2.2\Gateway.IF.dll
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\bin\Debug\netcoreapp2.2\Gateway.IF.pdb
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\bin\Debug\netcoreapp2.2\Gateway.DO.dll
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\bin\Debug\netcoreapp2.2\Gateway.DO.pdb
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\obj\Debug\netcoreapp2.2\Gateway.IF.csprojAssemblyReference.cache
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\obj\Debug\netcoreapp2.2\Gateway.IF.csproj.CoreCompileInputs.cache
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\obj\Debug\netcoreapp2.2\Gateway.IF.AssemblyInfoInputs.cache
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\obj\Debug\netcoreapp2.2\Gateway.IF.AssemblyInfo.cs
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\obj\Debug\netcoreapp2.2\Gateway.IF.csproj.CopyComplete
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\obj\Debug\netcoreapp2.2\Gateway.IF.dll
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.IF\Gateway.IF\obj\Debug\netcoreapp2.2\Gateway.IF.pdb

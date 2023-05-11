@@ -1,0 +1,43 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using eSyaGateway.IF;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace eSyaGateway.WebAPI.Controllers
+{
+    [Route("api/[controller]/[action]")]
+    [ApiController]
+    public class UserAccountController : ControllerBase
+    {
+        private readonly IUserAccountRepository _userAccountRepository;
+
+        public UserAccountController(IUserAccountRepository userAccountRepository)
+        {
+            _userAccountRepository = userAccountRepository;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFormAction(int userID, string navigationURL)
+        {
+            var ds = await _userAccountRepository.GetFormAction(userID, navigationURL);
+            return Ok(ds);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFormActionByUser(int businessID, int userID, string navigationURL)
+        {
+            var ds = await _userAccountRepository.GetFormActionByUser(businessID, userID, navigationURL);
+            return Ok(ds);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidateUserPassword(int userID, string password)
+        {
+            var ds = await _userAccountRepository.ValidateUserPassword(userID, password);
+            return Ok(ds);
+        }
+    }
+}

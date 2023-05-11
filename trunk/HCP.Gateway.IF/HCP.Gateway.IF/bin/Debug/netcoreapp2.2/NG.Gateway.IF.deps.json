@@ -1,0 +1,36 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v2.2",
+    "signature": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v2.2": {
+      "NG.Gateway.IF/1.0.0": {
+        "dependencies": {
+          "NG.Gateway.DO": "1.0.0"
+        },
+        "runtime": {
+          "NG.Gateway.IF.dll": {}
+        }
+      },
+      "NG.Gateway.DO/1.0.0": {
+        "runtime": {
+          "NG.Gateway.DO.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "NG.Gateway.IF/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "NG.Gateway.DO/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

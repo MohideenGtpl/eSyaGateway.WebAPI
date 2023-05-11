@@ -1,0 +1,8 @@
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.DO\Gateway.DO\bin\Debug\netcoreapp2.2\Gateway.DO.deps.json
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.DO\Gateway.DO\bin\Debug\netcoreapp2.2\Gateway.DO.dll
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.DO\Gateway.DO\bin\Debug\netcoreapp2.2\Gateway.DO.pdb
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.DO\Gateway.DO\obj\Debug\netcoreapp2.2\Gateway.DO.csproj.CoreCompileInputs.cache
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.DO\Gateway.DO\obj\Debug\netcoreapp2.2\Gateway.DO.AssemblyInfoInputs.cache
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.DO\Gateway.DO\obj\Debug\netcoreapp2.2\Gateway.DO.AssemblyInfo.cs
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.DO\Gateway.DO\obj\Debug\netcoreapp2.2\Gateway.DO.dll
+D:\eSya Project\Solution\Project_eSyaWebAPI\eSyaGateway.WebAPI\trunk\Gateway.DO\Gateway.DO\obj\Debug\netcoreapp2.2\Gateway.DO.pdb

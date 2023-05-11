@@ -1,0 +1,85 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using eSyaGateway.DO;
+using eSyaGateway.IF;
+using eSyaGateway.WebAPI.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace eSyaGateway.WebAPI.Controllers
+{
+    [Route("api/[controller]/[action]")]
+    [ApiController]
+    public class SmsSenderController : ControllerBase
+    {
+        private readonly ISmsStatementRepository _smsStatementRepository;
+        private readonly IUserAccountRepository _userAccountRepository;
+        private readonly ISmsSender _smsSender;
+
+        public SmsSenderController(ISmsStatementRepository smsStatementRepository, IUserAccountRepository userAccountRepository, ISmsSender smsSender)
+        {
+            _smsStatementRepository = smsStatementRepository;
+            _userAccountRepository = userAccountRepository;
+            _smsSender = smsSender;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendSmsForForm(DO_SmsParameter sp_obj)
+        {
+            var fs = await _smsStatementRepository.GetSmsStatementByForm(sp_obj);
+
+            if(sp_obj.IsUserPasswordInclude)
+            {
+                sp_obj.Password = await _userAccountRepository.GetUserPassword(sp_obj.UserID);
+
+            }
+
+            string mobileNumber = "", messageText = "";
+            foreach (var s in fs)
+            {
+                foreach(var r in s.l_SmsParam)
+                {
+                    if (r.ParameterID == (int)smsParams.User)
+                    {
+                        sp_obj.LoginID = r.ID;
+                        sp_obj.UserName = r.Name;
+                    }
+                }
+                messageText = TextualMessageReplaceByVariables(s.SMSStatement, sp_obj);
+                foreach (var p in s.l_SmsParam)
+                {
+                    if(!string.IsNullOrEmpty(p.MobileNumber))
+                        await _smsSender.SendAsync(p.MobileNumber, messageText);
+                }
+                if(s.l_SmsRecipient.Count() > 0)
+                    mobileNumber = string.Join(",", s.l_SmsRecipient.Select(w => w.MobileNumber));
+
+                if (!string.IsNullOrEmpty(mobileNumber))
+                    await _smsSender.SendAsync(mobileNumber, messageText);
+            }
+            return Ok();
+        }
+
+        public string TextualMessageReplaceByVariables(string smsTemplate, DO_SmsParameter sv)
+        {
+            //foreach (var sv in smsVariables)
+            //{
+            //    smsTemplate = smsTemplate.Replace(sv.Key, sv.Value);
+            //}
+            if(!string.IsNullOrEmpty(sv.OTP))
+                smsTemplate = smsTemplate.Replace("V0001", sv.OTP);
+            if (!string.IsNullOrEmpty(sv.LoginID))
+                smsTemplate = smsTemplate.Replace("V0002", sv.LoginID);
+            if (!string.IsNullOrEmpty(sv.UserName))
+                smsTemplate = smsTemplate.Replace("V0003", sv.UserName);
+            if (!string.IsNullOrEmpty(sv.Password))
+                smsTemplate = smsTemplate.Replace("V0004", sv.Password);
+
+            return smsTemplate;
+        }
+    }
+
+    
+}
